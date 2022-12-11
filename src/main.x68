@@ -17,6 +17,7 @@
 ;   .s_xxxx             local subroutine labels                 ;
 ;   bss_xxxx            global var locations                    ;
 ;   dat_xxxx            global const locations                  ;
+;   t_xxxx              test labels                             ;
 ;                                                               ;
 ;   no scratch except d0, all regs saved                        ;
 ;   arg pass via stack only, return in d0 only (C style)        ;
