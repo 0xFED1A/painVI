@@ -1,63 +1,99 @@
-pt68k2_os_calls
-    os_exit:            equ         $a01e
-;   get echoed char
-    os_get_echar:       equ         $a029
-    os_get_char:        equ         $a02a
-    os_put_char:        equ         $a033
+                        include     "./equs.x68"
+                        include     "./relocation.x68"
 
-pt68k2_symbols
-;   still cant belive this
-    sym_EOL:            equ         $04
-    sym_trail:          equ         $16
+                ;  oh boy this code is ridiculous
+                    ;   and i'm da fucking clown
+                        ;  enjoy
 
-pt68k2_keycodes
-    key_ESCAPE:         equ         $1b
-    key_i:              equ
-    key_a:              equ
-    key_0:              equ
-    key_$:              equ
-    key_h:              equ
-    key_j:              equ
-    key_k:              equ
-    key_l:              equ
-    key_w:              equ
-    key_b:              equ
-
-painvi_equs
-    pvi_NORMAL:         equ         $00
-    pvi_INSERT:         equ         $01
-    pvi_VISUAL:         equ         $02
-
-;   the relocation in SK*DOS is absolutley fucked up, U'VE BEEN WARNED!
-;   option #1 (for large files, with large offset):
-;       $03 $rrrrrr $ssss -- your code --
-;   requires GET -> SAVE procedure, !NOT BOOTABLE!
-;
-;   option #2 (for small files, with small offset):
-;       $02 $rrrr $ss -- your code -- $tt
-;   requires strange trailing constant 0x16 at the end of the file
-
-;   option #3 (for small files, no reloc info):
-;       -- your code -- $tt $aaaa
-;   no reloc info, just code, trailing constant, and start address
-rlc_header_struct
-;   relocation identificator byte
-    rlc_id:
-                        dc.b        $02
-;   code offset in bytes
-    rlc_offset:
-                        dc.w        $0000
-;   program size in bytes
-    rlc_size:
-                        dc.b        $15
+;---------------------------------------------------------------;
+;   rlc_xxxx            SK*DOS relocation data                  ;
+;   os_xxxx             SK*DOS system calls equations           ;
+;   sym_xxxx            symbol equations                        ;
+;   key_xxxx            keyboard scancode equations             ;
+;   pvi_xxxx            painvi equations                        ;
+;   c_xxxx              code labels                             ;
+;   .c_xxxx             local code labels                       ;
+;   s_xxxx              subroutine labels                       ;
+;   .s_xxxx             local subroutine labels                 ;
+;   bss_xxxx            global var locations                    ;
+;   dat_xxxx            global const locations                  ;
+;                                                               ;
+;   no scratch except d0, all regs saved                        ;
+;   arg pass via stack only, return in d0 only (C style)        ;
+;                                                               ;
+;   stack chores by caller                                      ;
+;                                                               ;
+;   for best results build this abomination with VASM           ;
+;   using this options: -spaces -Fbin                           ;
+;---------------------------------------------------------------;
 
 painvi_code
-;   a little proof of conept. Load in SK*DOS, and
-;   wait for user to pres "7" on keyboard
+;   save registers before usage, clear them
+;   and prepare CCR
+                        movem.l     d0-d7/a0-a6, -(a7)
+                        clr.l       d0
+                        movea.l     #0, a0
+                        clr.l       d1
+                        movea.l     #0, a1
+                        clr.l       d2
+                        movea.l     #0, a2
+                        clr.l       d3
+                        movea.l     #0, a3
+                        clr.l       d4
+                        movea.l     #0, a4
+                        clr.l       d5
+                        movea.l     #0, a5
+                        clr.l       d6
+                        movea.l     #0, a6
+                        clr.l       d7
+                        move.w      #0, ccr
+;   init global editor variables, and set editor to
+;   normal mode
+    c_init:
+                        move.w      #pvi_NORMAL, -(a7)
+                        bsr         s_mode_change
+                        adda.w      #4, a7
+;   first, get current mode by calling s_mode_get(), if result
+;   is !pvi_NORMAL (0x00) then branch to c_insertmode, else
+;   keep moving down to c_normalmode
+    c_busyloop:
+                        bsr         s_mode_get
+                        tst.b       d0
+                        bne.s       c_insertmode
+;   looks like we are in normal mode. Get character from keyboard
+;   without echo, then send received char to s_check_is_to_input()
+;   as arg. If result is zero, we are still in normal mode, otherwise
+;   change current mode to normal via s_mode_change() call and
+;   proceed to c_insertmode
+    c_normalmode:
                         dc.w        os_get_char
-                        andi.l      #$000000ff, d5
-                        cmpi.b      #key_7, d5
-                        bne.s       painvi_code
+                        move.w      d5, -(a7)
+                        bsr         s_check_is_to_input
+                        adda.l      #4, a7
+                        tst.b       d0
+                        beq.s       c_normalmode
+                        move.w      #pvi_INSERT, -(a7)
+                        bsr         s_mode_change
+                        adda.l      #4, a7
+;   seems we are in insert mode. Get char from keyboard with echo this
+;   time, then try (at least) to save it as is, by sending it to
+;   s_save_char_to_buff() and passing char as arg. Then, check
+    c_insertmode:
+                        dc.w        os_get_echar
+                        move.w      d5, -(a7)
+                        bsr         s_save_char_to_buff
+                        bsr         s_check_is_to_normal
+                        adda.l      #4, a7
+                        tst.b       d0
+                        beq.s       c_insertmode
+                        move.w      #pvi_NORMAL, -(a7)
+                        bsr         s_mode_change
+                        adda.l      #4, a7
+                        bra.s       c_normalmode
+
+;   pop unaltered registers, and run for your life
+                        movem.l     (a7)+, d0-d7/a0-a6
                         dc.w        os_exit
-                        dc.b        sym_trail
+
+                        include     "./data.x68"
                         end
