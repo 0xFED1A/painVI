@@ -21,3 +21,4 @@ painvi_data
                         dc.b        "--VISUAL--", $04
 ;   trailing symbol
                         dc.b        sym_trail
+                        even
