@@ -96,4 +96,12 @@ painvi_code
                         dc.w        os_exit
 
                         include     "./data.x68"
+                        include     "./subroutines/check_init_args.x68"
+                        include     "./subroutines/check_is_to_input.x68"
+                        include     "./subroutines/check_is_to_normal.x68"
+                        include     "./subroutines/file_read.x68"
+                        include     "./subroutines/file_write.x68"
+                        include     "./subroutines/mode_change.x68"
+                        include     "./subroutines/mode_get.x68"
+                        include     "./subroutines/save_char_to_buff.x68"
                         end
