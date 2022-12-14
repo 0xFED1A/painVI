@@ -41,7 +41,7 @@ t_code
 ;   tested item onto stack. Then call tested subroutine.
                         clr.l       d3
                         move.w      (a0), -(a7)
-                        bsr         .s_mode_change
+                        bsr         s_mode_change
                         adda.l      #2, a7
 ;   report assertion begins like this:
 ;   "\nNow asserting: 00ff"
