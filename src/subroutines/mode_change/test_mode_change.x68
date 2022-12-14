@@ -14,7 +14,7 @@ rlc_header_struct
                         dc.w        $0000
 ;   program size in bytes
     rlc_size:
-                        dc.b        $15
+                        dc.b        350
 
 t_code
     .t_start:
@@ -47,7 +47,7 @@ t_code
 ;   "\nNow asserting: 00ff"
                         lea.l       dat_msg_asserting(pc), a4
                         dc.w        os_write_ln
-                        move.w      (a0), d4
+                        move.w      (a0)+, d4
                         dc.w        os_put_4hex
 ;   check if returned result is correct. If so, branch to
 ;   testing setted value. If no, mark error flag in d3
@@ -62,7 +62,7 @@ t_code
                         dc.w        os_write
                         lea.l       dat_msg_expected_ret(pc), a4
                         dc.w        os_write_ln
-                        move.b      (a1), d4
+                        move.b      (a1)+, d4
                         dc.w        os_put_2hex
                         lea.l       dat_msg_but(pc), a4
                         dc.w        os_write
@@ -72,12 +72,43 @@ t_code
                         dc.w        os_write
     .t_return_ok:
 ;   its time to check what value was actually setted by routine
+;   first we reuse d3 which stores error flag as a temporary place
+;   to store current mode. We swap d3 to keep error flag safe
+;   then we check if current mode equals to expected mode, and if
+;   so, we print success, and branch to next tested value
+;   otherwise
+                        swap.w      d3
                         move.b      (a2), d3
-                        cmp.b       (a0)+, d3
-;                       beq.s       .t_setmode_ok
-;   TODO: report code
-;   if everything fine continue testing
+                        cmp.b       (a3), d3
+                        beq.s       .t_setmode_ok
+                        swap.w      d3
+                        tst.b       d3
+                        bne.s       .t_skip_failed
+                        lea.l       dat_msg_fail(pc), a4
+                        dc.w        os_write
+    .t_skip_failed:
+                        lea.l       dat_msg_expected_mode(pc), a4
+                        dc.w        os_write
+                        move.b      (a3)+, d4
+                        dc.w        os_put_2hex
+                        lea.l       dat_msg_but(pc), a4
+                        dc.w        os_write
+                        move.b      (a2), d4
+                        dc.w        os_put_2hex
+                        lea.l       dat_msg_obtained(pc), a4
+                        dc.w        os_write
+                        bra.s       .t_skip_success
+;   assure than both test passed flawlessly, by swapping d3, and testing
+;   its LSB.
+;   if LSB is clean both tests passed, and we tell user about it
+;   "\nNow asserting: 00ff Success."
     .t_setmode_ok:
+                        swap.w      d3
+                        tst.b       d3
+    .t_put_success:
+                        lea.l       dat_msg_success(pc), a4
+                        dc.w        os_write
+    .t_skip_success:
                         dbra        d1, .t_loop
                         dc.w        os_exit
 
