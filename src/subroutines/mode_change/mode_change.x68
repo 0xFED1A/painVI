@@ -5,7 +5,7 @@
 s_mode_change
     .s_ok:              set          0
     .s_err:             set          -1
-    .s_passed_mode:     set          8
+    .s_passed_mode:     set         9
 
     .s_start:
 ;   save a0 before usege, then check passed arg against

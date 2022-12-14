@@ -14,7 +14,7 @@ rlc_header_struct
                         dc.w        $0000
 ;   program size in bytes
     rlc_size:
-                        dc.b        350
+                        dc.b        0
 
 t_code
     .t_start:
@@ -52,7 +52,7 @@ t_code
 ;   check if returned result is correct. If so, branch to
 ;   testing setted value. If no, mark error flag in d3
 ;   and continue with report error
-                        cmp.b      (a1), d0
+                        cmp.b       (a1), d0
                         beq.s       .t_return_ok
                         sne.b       d3
 ;   if assertion of return code failed, report it like this:
@@ -88,7 +88,7 @@ t_code
                         dc.w        os_write
     .t_skip_failed:
                         lea.l       dat_msg_expected_mode(pc), a4
-                        dc.w        os_write
+                        dc.w        os_write_ln
                         move.b      (a3)+, d4
                         dc.w        os_put_2hex
                         lea.l       dat_msg_but(pc), a4
@@ -105,6 +105,7 @@ t_code
     .t_setmode_ok:
                         swap.w      d3
                         tst.b       d3
+                        bne.s       .t_skip_success
     .t_put_success:
                         lea.l       dat_msg_success(pc), a4
                         dc.w        os_write
@@ -135,9 +136,9 @@ t_data
     dat_msg_fail:
                         dc.b        " Fail!", sym_EOL
     dat_msg_expected_ret:
-                        dc.b        "    Return code expected: ", sym_EOL
+                        dc.b        "    Return code expected ", sym_EOL
     dat_msg_expected_mode:
-                        dc.b        "    Mode change expected: ", sym_EOL
+                        dc.b        "    Mode change expected ", sym_EOL
     dat_msg_obtained:
                         dc.b        " obtained.", sym_EOL
     dat_msg_but:
@@ -147,4 +148,5 @@ t_data
                         even
 
                         include     "./mode_change.x68"
+                        dc.b        sym_trail
                         end
