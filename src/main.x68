@@ -52,7 +52,7 @@ painvi_code
 ;   normal mode
     c_init:
                         move.w      #pvi_NORMAL, -(a7)
-                        bsr         s_mode_change
+                        bsr         s_mode_set
                         adda.w      #4, a7
 ;   first, get current mode by calling s_mode_get(), if result
 ;   is !pvi_NORMAL (0x00) then branch to c_insertmode, else
@@ -64,7 +64,7 @@ painvi_code
 ;   looks like we are in normal mode. Get character from keyboard
 ;   without echo, then send received char to s_check_is_to_input()
 ;   as arg. If result is zero, we are still in normal mode, otherwise
-;   change current mode to normal via s_mode_change() call and
+;   change current mode to normal via s_mode_set() call and
 ;   proceed to c_insertmode
     c_normalmode:
                         dc.w        os_get_char
@@ -74,7 +74,7 @@ painvi_code
                         tst.b       d0
                         beq.s       c_normalmode
                         move.w      #pvi_INSERT, -(a7)
-                        bsr         s_mode_change
+                        bsr         s_mode_set
                         adda.l      #4, a7
 ;   seems we are in insert mode. Get char from keyboard with echo this
 ;   time, then try (at least) to save it as is, by sending it to
@@ -88,7 +88,7 @@ painvi_code
                         tst.b       d0
                         beq.s       c_insertmode
                         move.w      #pvi_NORMAL, -(a7)
-                        bsr         s_mode_change
+                        bsr         s_mode_set
                         adda.l      #4, a7
                         bra.s       c_normalmode
 
@@ -103,7 +103,7 @@ painvi_code
                         include     "./check_is_to_normal/check_is_to_normal.x68"
                         include     "./file_read/file_read.x68"
                         include     "./file_write/file_write.x68"
-                        include     "./mode_change/mode_change.x68"
+                        include     "./mode_set/mode_set.x68"
                         include     "./mode_get/mode_get.x68"
                         include     "./save_char_to_buff/save_char_to_buff.x68"
                         end

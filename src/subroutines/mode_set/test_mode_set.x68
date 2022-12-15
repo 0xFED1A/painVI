@@ -1,4 +1,4 @@
-; test for s_mode_change subroutine
+; test for s_mode_set subroutine
 
                         include     "../../equs.x68"
 
@@ -39,11 +39,11 @@ t_code
                         clr.l       d4
                         clr.l       d5
     .t_loop:
-;   testing s_mode_change subroutine here. First, push next
+;   testing s_mode_set subroutine here. First, push next
 ;   tested item onto stack. Then call tested subroutine.
                         clr.l       d3
                         move.w      (a0), -(a7)
-                        bsr         s_mode_change
+                        bsr         s_mode_set
                         adda.l      #2, a7
 ;   report assertion begins like this:
 ;   "\nNow asserting: 00ff"
@@ -173,6 +173,6 @@ t_data
                         ds.b        1
                         even
 
-                        include     "./mode_change.x68"
+                        include     "./mode_set.x68"
                         dc.b        sym_trail
                         end

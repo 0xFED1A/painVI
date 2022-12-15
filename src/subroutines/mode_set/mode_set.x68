@@ -1,8 +1,8 @@
 ;   set current editor mode
 ;   @param: stack.w - pvi_NORMAL/pvi_INSERT/pvi_VISUAL
-;   @returns: d0.b - s_mode_change_ok/s_mode_change_err
+;   @returns: d0.b - s_ok/s_err
 
-s_mode_change
+s_mode_set
     .s_ok:              set          0
     .s_err:             set          -1
     .s_passed_mode:     set          12
@@ -29,5 +29,5 @@ s_mode_change
 ;   if arg was ok dont forget to return ok return code
                         move.b      #.s_ok, d0
     .s_exit:
-                        movem.l      (a7)+, d0/a0
+                        movem.l     (a7)+, d0/a0
                         rts
